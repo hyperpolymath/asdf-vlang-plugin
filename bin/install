@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/utils.bash"
+check_dependencies
+[[ -z "${ASDF_INSTALL_VERSION:-}" ]] && fail "VERSION required"
+[[ -z "${ASDF_INSTALL_PATH:-}" ]] && fail "PATH required"
+mkdir -p "${ASDF_INSTALL_PATH}/bin"
+log_info "Installing..."
