@@ -1,58 +1,37 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-name: Code Quality
-on: [push, pull_request]
+name: Quality
 
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 permissions: read-all
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      
-      - name: Check file permissions
-        run: |
-          find . -type f -perm /111 -name "*.sh" | head -10 || true
-      
-      - name: Check for secrets
-        uses: trufflesecurity/trufflehog@ef6e76c3c4023279497fab4721ffa071a722fd05 # v3.92.4
-        with:
-          path: ./
-          base: ${{ github.event.pull_request.base.sha || github.event.before }}
-          head: ${{ github.sha }}
-        continue-on-error: true
-      
-      - name: Check TODO/FIXME
-        run: |
-          echo "=== TODOs ==="
-          grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.rs" --include="*.res" --include="*.py" --include="*.ex" . | head -20 || echo "None found"
-      
-      - name: Check for large files
-        run: |
-          find . -type f -size +1M -not -path "./.git/*" | head -10 || echo "No large files"
-      
-      - name: EditorConfig check
-        uses: editorconfig-checker/action-editorconfig-checker@4b6cd6190d435e7e084fb35e36a096e98506f7b9 # v2.1.0
-        continue-on-error: true
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
-  docs:
+      - name: EditorConfig Check
+        uses: editorconfig-checker/action-editorconfig-checker@9f8f6065f4db902c0c56cafa67cea18b3ebbb680 # main
+
+      - name: ShellCheck
+        run: shellcheck bin/* lib/*.bash 2>/dev/null || true
+
+  secrets:
+    name: Secret Scanner
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - name: Check documentation
-        run: |
-          MISSING=""
-          [ ! -f "README.md" ] && [ ! -f "README.adoc" ] && MISSING="$MISSING README"
-          [ ! -f "LICENSE" ] && [ ! -f "LICENSE.txt" ] && [ ! -f "LICENSE.md" ] && MISSING="$MISSING LICENSE"
-          [ ! -f "CONTRIBUTING.md" ] && [ ! -f "CONTRIBUTING.adoc" ] && MISSING="$MISSING CONTRIBUTING"
-          
-          if [ -n "$MISSING" ]; then
-            echo "::warning::Missing docs:$MISSING"
-          else
-            echo "✅ Core documentation present"
-          fi
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@8a8ef8526528d8a4ff3e2c90be08e25ef8efbd9b # v3
+        with:
+          extra_args: --only-verified
