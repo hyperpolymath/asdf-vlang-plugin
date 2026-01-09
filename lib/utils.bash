@@ -49,10 +49,30 @@ get_arch_alt() {
 }
 
 list_all_versions() {
-  curl -sL "https://api.github.com/repos/$TOOL_REPO/releases" 2>/dev/null | \
-    jq -r '.[].tag_name // empty' 2>/dev/null | \
-    sed 's/^v//' | \
+  local versions
+  versions="$(curl -sL "https://api.github.com/repos/$TOOL_REPO/releases" 2>/dev/null)"
+
+  if command -v jq >/dev/null 2>&1; then
+    echo "$versions" | jq -r '.[].tag_name // empty' 2>/dev/null | sed 's/^v//' | sort_versions
+  else
+    # Fallback without jq
+    echo "$versions" | \
+      command grep -o '"tag_name": "[^"]*"' | \
+      sed 's/"tag_name": "//' | \
+      sed 's/"$//' | \
+      sed 's/^v//' | \
+      sort_versions
+  fi
+}
+
+sort_versions() {
+  # Use sort -V if available, otherwise fall back to sort -t. -k1,1n -k2,2n -k3,3n
+  if sort -V </dev/null 2>/dev/null; then
     sort -V
+  else
+    # macOS fallback: simple numeric sort (handles most semantic versions)
+    sort -t. -k1,1n -k2,2n -k3,3n
+  fi
 }
 
 get_download_url() {
