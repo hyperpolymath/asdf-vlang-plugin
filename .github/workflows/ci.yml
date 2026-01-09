@@ -19,7 +19,7 @@ jobs:
       - name: Run ShellCheck
         run: |
           shellcheck --version
-          shellcheck bin/* lib/*.bash
+          shellcheck -x -e SC1091 bin/* lib/*.bash
 
   test:
     name: Test Plugin
