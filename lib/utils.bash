@@ -57,11 +57,16 @@ list_all_versions() {
 
 get_download_url() {
   local version="$1"
-  local os="$(get_platform)"
-  local Os="$(uname -s)"
-  local os_alt="$(get_platform_alt)"
-  local arch="$(get_arch)"
-  local arch_alt="$(get_arch_alt)"
+  local os
+  os="$(get_platform)"
+  local Os
+  Os="$(uname -s)"
+  local os_alt
+  os_alt="$(get_platform_alt)"
+  local arch
+  arch="$(get_arch)"
+  local arch_alt
+  arch_alt="$(get_arch_alt)"
 
   local pattern="v_{os}.zip"
   local asset_name
@@ -92,7 +97,8 @@ unzip -q "$archive" -d "$download_path" || fail "Extract failed"
 rm -f "$archive"
 # Find binary
 if [[ ! -f "$download_path/$BINARY_NAME" ]]; then
-  local found="$(find "$download_path" -name "$BINARY_NAME" -type f 2>/dev/null | head -1)"
+  local found
+  found="$(find "$download_path" -name "$BINARY_NAME" -type f 2>/dev/null | head -1)"
   if [[ -n "$found" ]]; then
     mv "$found" "$download_path/$BINARY_NAME"
   fi
